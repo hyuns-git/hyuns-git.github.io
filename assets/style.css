@@ -34,6 +34,7 @@
 :root{--faint:var(--ink-3)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+figure{margin:0}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.5;
   -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere;
