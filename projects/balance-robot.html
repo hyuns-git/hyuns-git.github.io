@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2륜 자율 균형 로봇 · 조현세</title>
+<meta name="description" content="EKF 자세 추정과 PPO 강화학습으로 자세 오차를 PID 대비 79.5%, LQR 대비 65.6% 줄였습니다.">
+<meta property="og:title" content="2륜 자율 균형 로봇 · 조현세">
+<meta property="og:description" content="EKF 자세 추정과 PPO 강화학습으로 자세 오차를 PID 대비 79.5%, LQR 대비 65.6% 줄였습니다.">
+<meta property="og:image" content="https://hyuns-git.github.io/assets/media/balance-card.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#fffaf5">
+<script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav-wrap">
+<nav class="nav" aria-label="주요 메뉴">
+<ul class="nav-items">
+<li><a class="tile" href="../index.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg><span class="lbl">Home</span></a></li>
+<li class="dd"><button class="tile" type="button" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span class="lbl">About</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<ul class="menu">
+<li><a href="../resume.html">이력서</a></li>
+<li><a href="../contact.html">연락처</a></li>
+<li class="sep" role="separator"></li>
+<li><a href="https://github.com/hyuns-git">GitHub ↗</a></li>
+</ul></li>
+<li class="dd"><button class="tile" type="button" aria-expanded="false" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg><span class="lbl">Projects</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<ul class="menu">
+<li><a href="../projects.html">전체 프로젝트</a></li>
+<li class="sep" role="separator"></li>
+<li><a href="../projects/go2-stair.html">사족보행 로봇 도그레그 계단 자율 주행</a></li><li><a href="../projects/balance-robot.html">2륜 자율 균형 로봇</a></li><li><a href="../projects/patent.html">평문 기반 대칭-라쳇 키 생성 (특허 출원)</a></li><li><a href="../projects/ev3.html">EV3 미로 탐색·객체 운반</a></li><li><a href="../projects/walking-assist.html">STM32 탈부착형 보행 보조 모듈</a></li><li><a href="../projects/edge-ai-trash.html">저전력 Edge AI 쓰레기 분류 시스템</a></li><li><a href="../projects/turret.html">AI 지상 감시·정밀 타격 시스템</a></li><li><a href="../projects/smart-irrigation.html">지능형 자동 관수 장치</a></li>
+</ul></li>
+<li><a class="tile" href="../contact.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span class="lbl">Contact</span></a></li>
+</ul>
+<button class="theme" type="button" aria-label="다크 모드 전환"><svg class="i moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+</nav>
+</div>
+<main class="page">
+<a class="back" href="../projects.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>Projects</a>
+<div class="art-wrap">
+<aside class="toc" aria-label="목차"><b>On this page</b><ol><li><a href="#overview">개요</a></li><li><a href="#s1">시스템 구조</a></li><li><a href="#s2">결과</a></li><li><a href="#s3">막혔던 문제와 해결</a></li><li><a href="#s4">담당</a></li><li><a href="#s5">문서</a></li></ol></aside>
+<article class="article">
+<div id="overview" style="scroll-margin-top:120px">
+<div class="pills"><span class="pill date">대표 프로젝트</span><span class="pill">#ROS 2</span><span class="pill">#ESP32</span><span class="pill">#Raspberry Pi 5</span><span class="pill">#EKF</span><span class="pill">#PPO</span></div>
+<h1>2륜 자율 균형 로봇</h1>
+<p class="sub">캡스톤디자인 · 팀 프로젝트</p>
+</div>
+<dl class="summary"><div><dt>문제</dt><dd>PID와 LQR 제어는 손으로 미는 정도의 외란에도 자세가 크게 흔들렸습니다.</dd></div><div><dt>접근</dt><dd>ESP32가 센서와 모터를 맡고, Raspberry Pi 5가 EKF 자세 추정과 PPO 정책 연산을 맡는 분산 구조로 만들었습니다.</dd></div><div><dt>결과</dt><dd>자세 오차를 PID 대비 79.5%, LQR 대비 65.6% 줄였습니다.</dd></div></dl>
+<figure class="media">
+  <video src="../assets/media/balance-disturbance.mp4" poster="../assets/media/balance-disturbance.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="손으로 로봇을 밀어 외란을 준 뒤 로봇이 자세를 회복하는 시험 영상"></video>
+  <figcaption class="cap"><span>외란 시험 · 손으로 밀어도 자세를 회복</span><span>정면, 측면 · 19초</span></figcaption>
+</figure>
+<div class="clips">
+  <figure><video src="../assets/media/balance-indoor.mp4" poster="../assets/media/balance-indoor.jpg" autoplay muted loop playsinline preload="metadata" aria-label="실내 복도에서 문틀 레일을 넘어 주행하는 영상"></video><figcaption class="cap"><span>실내 문틀 레일 통과</span></figcaption></figure>
+  <figure><video src="../assets/media/balance-outdoor.mp4" poster="../assets/media/balance-outdoor.jpg" autoplay muted loop playsinline preload="metadata" aria-label="실외에서 아스팔트와 보도블록을 오가며 주행하는 영상"></video><figcaption class="cap"><span>실외 노면 전환 주행</span><span>1.5×</span></figcaption></figure>
+</div>
+
+<section id="s1">
+<h2>시스템 구조</h2>
+<div class="diagram" role="img" aria-label="ESP32가 IMU 센서값을 측정해 Raspberry Pi 5로 보내고, Raspberry Pi 5가 EKF로 자세를 추정한 뒤 PPO 정책으로 제어 명령을 계산해 ESP32로 돌려보내 모터를 구동하는 구조">
+<svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="13">
+<defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink-2)"/></marker></defs>
+<rect x="10" y="30" width="250" height="160" rx="8" fill="var(--bg)" stroke="var(--rule)" stroke-width="1.5"/>
+<rect x="440" y="30" width="310" height="160" rx="8" fill="var(--bg)" stroke="var(--rule)" stroke-width="1.5"/>
+<text x="26" y="56" fill="var(--ink-2)" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">LOW LEVEL · MCU</text>
+<text x="456" y="56" fill="var(--ink-2)" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">HIGH LEVEL · ROS 2</text>
+<text x="26" y="80" fill="var(--ink)" font-weight="700" font-size="15">ESP32</text>
+<text x="456" y="80" fill="var(--ink)" font-weight="700" font-size="15">Raspberry Pi 5</text>
+<g fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"><rect x="26" y="96" width="218" height="36" rx="5"/><rect x="26" y="140" width="218" height="36" rx="5"/><rect x="456" y="96" width="130" height="80" rx="5"/></g>
+<rect x="604" y="96" width="130" height="80" rx="5" fill="var(--laser-dim)" stroke="var(--laser)" stroke-width="1.6"/>
+<g fill="var(--ink)" text-anchor="middle"><text x="135" y="119">IMU 센서 측정</text><text x="135" y="163">모터 구동</text>
+<text x="521" y="132">EKF</text><text x="521" y="150" fill="var(--ink-2)" font-size="11">자세 추정</text>
+<text x="669" y="132" font-weight="700">PPO 정책</text><text x="669" y="150" fill="var(--ink-2)" font-size="11">제어 명령 계산</text></g>
+<path d="M586 136H600" stroke="var(--ink-2)" stroke-width="1.5" fill="none" marker-end="url(#ar4)"/>
+<path d="M244 114H452" stroke="var(--laser)" stroke-width="1.8" fill="none" marker-end="url(#ar4)"/>
+<path d="M669 176V204H140V180" stroke="var(--ink-2)" stroke-width="1.5" fill="none" marker-end="url(#ar4)"/>
+<text x="348" y="106" text-anchor="middle" fill="var(--laser)" font-size="12">센서값 전달</text>
+<text x="404" y="198" text-anchor="middle" fill="var(--ink-2)" font-size="11">제어 명령</text>
+<g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="10" fill="var(--laser)" text-anchor="middle"><text x="348" y="132">담당</text><text x="669" y="90">담당</text></g>
+</svg></div>
+<p class="note" style="margin-top:12px">상위 정책이 정교해도 하위 MCU의 센서값이 제때 정확히 도착해야 제어가 됩니다. 두 보드 사이 통신과 PPO 정책을 함께 맡아서 이 연결을 직접 다뤘습니다.</p>
+</section>
+
+<section id="s2">
+<h2>결과</h2>
+<div class="bars" role="img" aria-label="PID 자세 오차를 100으로 놓았을 때 LQR 59.6, EKF와 PPO 20.5">
+<div class="bar-row"><span class="mono">PID</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="val">100</span></div>
+<div class="bar-row"><span class="mono">LQR</span><div class="track"><div class="fill" style="width:59.6%"></div></div><span class="val">59.6</span></div>
+<div class="bar-row best"><span class="mono">EKF+PPO</span><div class="track"><div class="fill" style="width:20.5%"></div></div><span class="val">20.5</span></div>
+</div>
+<p class="note" style="margin-top:10px">PID의 자세 오차를 100으로 놓은 상대값입니다. PID 대비 79.5%, LQR 대비 65.6% 감소에서 계산했습니다.</p>
+</section>
+
+<section id="s3">
+<h2>막혔던 문제와 해결</h2>
+<ol class="log">
+<li><span class="i">01</span><div><div class="p">처음 작성한 PPO가 균형을 잡지 못함</div><div class="a">학습량을 늘리고 하이퍼파라미터를 다시 조정해 균형 제어에 성공했습니다.</div></div></li>
+<li><span class="i">02</span><div><div class="p">조립 단계에서 센서가 제대로 작동하지 않음</div><div class="a">소프트웨어 담당이었지만 하드웨어 팀원들과 같이 원인을 찾아 해결했습니다.</div></div></li>
+</ol>
+</section>
+
+<section id="s4">
+<h2>담당</h2>
+<ul class="role">
+<li>PPO 강화학습 제어 정책 작성, 학습, 튜닝</li>
+<li>ESP32와 Raspberry Pi 5 사이 통신 연결, 센서값 안정 수신</li>
+</ul>
+</section>
+
+<section id="s5">
+<h2>문서</h2>
+<ul class="links"><li><a href="https://github.com/hyuns-git/two_wheel_robot_docs">two_wheel_robot_docs</a><span class="mono">프로젝트 문서</span></li></ul>
+</section>
+
+<nav class="pager" aria-label="다른 프로젝트"><a href="go2-stair.html"><small>이전</small>사족보행 로봇 도그레그 계단 자율 주행</a><a href="patent.html" style="text-align:right"><small>다음</small>평문 기반 대칭-라쳇 키 생성 (특허 출원)</a></nav>
+</article>
+</div>
+</main>
+<footer class="foot">© 2026 조현세 · 경희대학교 전자공학과</footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

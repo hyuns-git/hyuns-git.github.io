@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>저전력 Edge AI 쓰레기 분류 시스템 · 조현세</title>
+<meta name="description" content="Zybo Z7-20의 FreeRTOS 태스크 7개 위에서 MobileNetV2로 쓰레기를 분류해 뚜껑을 열고, 적재량은 웹에서 봅니다. 분류 정확도 72.3%.">
+<meta property="og:title" content="저전력 Edge AI 쓰레기 분류 시스템 · 조현세">
+<meta property="og:description" content="Zybo Z7-20의 FreeRTOS 태스크 7개 위에서 MobileNetV2로 쓰레기를 분류해 뚜껑을 열고, 적재량은 웹에서 봅니다. 분류 정확도 72.3%.">
+<meta property="og:image" content="https://hyuns-git.github.io/assets/media/p3-system.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#fffaf5">
+<script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav-wrap">
+<nav class="nav" aria-label="주요 메뉴">
+<ul class="nav-items">
+<li><a class="tile" href="../index.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg><span class="lbl">Home</span></a></li>
+<li class="dd"><button class="tile" type="button" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span class="lbl">About</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<ul class="menu">
+<li><a href="../resume.html">이력서</a></li>
+<li><a href="../contact.html">연락처</a></li>
+<li class="sep" role="separator"></li>
+<li><a href="https://github.com/hyuns-git">GitHub ↗</a></li>
+</ul></li>
+<li class="dd"><button class="tile" type="button" aria-expanded="false" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg><span class="lbl">Projects</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<ul class="menu">
+<li><a href="../projects.html">전체 프로젝트</a></li>
+<li class="sep" role="separator"></li>
+<li><a href="../projects/go2-stair.html">사족보행 로봇 도그레그 계단 자율 주행</a></li><li><a href="../projects/balance-robot.html">2륜 자율 균형 로봇</a></li><li><a href="../projects/patent.html">평문 기반 대칭-라쳇 키 생성 (특허 출원)</a></li><li><a href="../projects/ev3.html">EV3 미로 탐색·객체 운반</a></li><li><a href="../projects/walking-assist.html">STM32 탈부착형 보행 보조 모듈</a></li><li><a href="../projects/edge-ai-trash.html">저전력 Edge AI 쓰레기 분류 시스템</a></li><li><a href="../projects/turret.html">AI 지상 감시·정밀 타격 시스템</a></li><li><a href="../projects/smart-irrigation.html">지능형 자동 관수 장치</a></li>
+</ul></li>
+<li><a class="tile" href="../contact.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span class="lbl">Contact</span></a></li>
+</ul>
+<button class="theme" type="button" aria-label="다크 모드 전환"><svg class="i moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+</nav>
+</div>
+<main class="page">
+<a class="back" href="../projects.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>Projects</a>
+<div class="art-wrap">
+<aside class="toc" aria-label="목차"><b>On this page</b><ol><li><a href="#overview">개요</a></li><li><a href="#s1">시스템 구조</a></li><li><a href="#s2">핵심 구현</a></li><li><a href="#s3">수치</a></li><li><a href="#s4">링크</a></li></ol></aside>
+<article class="article">
+<div id="overview" style="scroll-margin-top:120px">
+<div class="pills"><span class="pill date">임베디드시스템설계</span><span class="pill">#FreeRTOS</span><span class="pill">#TFLite Micro</span><span class="pill">#MobileNetV2</span><span class="pill">#Flask</span></div>
+<h1>저전력 Edge AI 쓰레기 분류 시스템</h1>
+<p class="sub">임베디드시스템설계 Project 3 · 10조</p>
+</div>
+<dl class="summary"><div><dt>문제</dt><dd>분리배출을 사람이 직접 판단해야 하고, 쓰레기통이 언제 찼는지 모른 채 정해진 시간에만 수거합니다.</dd></div><div><dt>접근</dt><dd>물체가 올라오면 Zybo Z7-20이 카메라로 찍어 캔, 일반, 유리, 페트를 분류하고 해당 뚜껑을 엽니다. 평소에는 초음파 센서만 켜 두고, 물체가 감지될 때만 AI 태스크를 깨웁니다.</dd></div><div><dt>결과</dt><dd>5종(빈 화면 포함) 분류 정확도 72.3%. 적재 상태는 Wi-Fi로 서버에 보내 웹 대시보드에서 2초마다 갱신합니다.</dd></div></dl>
+<figure class="media">
+  <video src="../assets/media/p3-demo.mp4" poster="../assets/media/p3-demo.jpg" muted loop playsinline controls preload="metadata" aria-label="일반, 캔, 유리, 페트를 차례로 올려 해당 뚜껑이 열리고, 적재 감지 후 웹 대시보드 표시가 바뀌는 시연 영상"></video>
+  <figcaption class="cap"><span>시연 · 분류 5가지 경우, 적재 감지, 웹 관제</span><span>1.5× · 39초</span></figcaption>
+</figure>
+<div class="gallery g4">
+<figure><img src="../assets/media/p3-system.jpg" alt="일반, 캔, 유리, 페트 4칸 분리수거함과 카메라, LCD" loading="lazy"><figcaption class="cap"><span>전체 시스템</span></figcaption></figure>
+<figure><img src="../assets/media/p3-wiring.jpg" alt="분리수거함 뒷면의 서보와 보드 배선" loading="lazy"><figcaption class="cap"><span>뒷면 배선</span></figcaption></figure>
+<figure><img class="fit" src="../assets/media/p3-zybo-vs-pc.jpg" alt="같은 입력 이미지에 대해 Zybo 보드와 PC 파이썬의 클래스별 확률이 같게 나온 화면" loading="lazy"><figcaption class="cap"><span>Zybo, PC 추론 결과 일치</span></figcaption></figure>
+<figure><img class="fit" src="../assets/media/p3-dashboard.jpg" alt="평면도 위 쓰레기통을 누르면 종류별 적재 상태가 나오는 웹 대시보드" loading="lazy"><figcaption class="cap"><span>적재량 대시보드</span></figcaption></figure>
+</div>
+
+<section id="s1">
+<h2>시스템 구조</h2>
+<div class="diagram" role="img" aria-label="Arduino 1이 초음파로 물체를 감지하면 UART로 Zybo에 시작 신호를 보내고, Zybo의 FreeRTOS에서 카메라 태스크와 AI 태스크가 세마포어로 번갈아 동작해 분류 결과를 UART로 돌려준다. Arduino 2는 적재 상태를 Wi-Fi로 Flask 서버에 보내고 웹 대시보드가 2초마다 갱신한다">
+<svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="13">
+<defs><marker id="e3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink-2)"/></marker></defs>
+<g fill="var(--bg)" stroke="var(--rule)" stroke-width="1.5"><rect x="10" y="20" width="200" height="100" rx="8"/><rect x="10" y="140" width="200" height="56" rx="8"/><rect x="300" y="140" width="190" height="56" rx="8"/><rect x="560" y="140" width="190" height="56" rx="8"/></g>
+<rect x="300" y="20" width="450" height="100" rx="8" fill="var(--laser-dim)" stroke="var(--laser)" stroke-width="1.8"/>
+<g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="10" fill="var(--ink-2)"><text x="24" y="40">ARDUINO #1 · FSM</text><text x="314" y="40">ZYBO Z7-20 PS · FreeRTOS · 7 TASKS</text><text x="24" y="160">ARDUINO #2</text></g>
+<g fill="var(--ink)"><text x="24" y="64">초음파 10cm · 2초 감지</text><text x="24" y="84">서보 뚜껑 개방</text><text x="24" y="104">I2C LCD</text>
+<text x="24" y="184">적재 초음파 → Wi-Fi</text><text x="314" y="174">Flask 서버</text><text x="574" y="174">웹 대시보드 · 2초 갱신</text></g>
+<g fill="var(--bg)" stroke="var(--rule)" stroke-width="1.2"><rect x="314" y="52" width="150" height="52" rx="5"/><rect x="584" y="52" width="150" height="52" rx="5"/></g>
+<g fill="var(--ink)" text-anchor="middle"><text x="389" y="74">CameraTask</text><text x="389" y="92" fill="var(--ink-2)" font-size="11">ArduCAM SPI · I2C</text>
+<text x="659" y="74" font-weight="700">AI Task</text><text x="659" y="92" fill="var(--ink-2)" font-size="11">MobileNetV2 α0.5</text></g>
+<g stroke="var(--laser)" stroke-width="1.6" fill="none" marker-end="url(#e3)"><path d="M464 70H580"/><path d="M584 90H468"/></g>
+<text x="524" y="62" text-anchor="middle" fill="var(--laser)" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">DataReady</text>
+<text x="524" y="104" text-anchor="middle" fill="var(--laser)" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">AI_Done</text>
+<g stroke="var(--ink-2)" stroke-width="1.5" fill="none" marker-end="url(#e3)"><path d="M210 50H296"/><path d="M300 108H214"/><path d="M210 168H296"/><path d="M490 168H556"/></g>
+<text x="254" y="44" text-anchor="middle" fill="var(--ink-2)" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">UART '1'</text>
+<text x="254" y="102" text-anchor="middle" fill="var(--ink-2)" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">'1'~'5'</text>
+</svg></div>
+</section>
+
+<section id="s2">
+<h2>핵심 구현</h2>
+<ul class="role">
+<li>MobileNetV2(α=0.5, 128×128)를 두 단계로 전이학습: 상위 레이어 학습 후 베이스 상위 40개 레이어 미세조정</li>
+<li>TrashNet, RealWaste, TrashBox 데이터셋을 캔, 일반, 유리, 페트, 빈 화면 5종으로 재구성</li>
+<li>FreeRTOS 태스크 우선순위를 나누고, 바이너리 세마포어 두 개로 카메라와 AI 태스크가 번갈아 돌게 해 이미지 버퍼 덮어쓰기를 막음. UART는 Mutex로 보호하고 송수신은 Queue로 비동기 처리</li>
+<li>Arduino #1은 레지스터 제어와 3상태 FSM. 분류 결과가 오지 않으면 타임아웃으로 대기 상태로 복귀</li>
+<li>Arduino #2는 UART 인터럽트 원형 큐로 Wi-Fi 모듈 응답 유실을 막음</li>
+</ul>
+</section>
+
+<section id="s3">
+<h2>수치</h2>
+<dl class="kv">
+<dt>분류 정확도</dt><dd>72.3% (2단계 학습 후)</dd>
+<dt>모델</dt><dd>파라미터 876,469개 · 3.34MB</dd>
+<dt>추론 환경</dt><dd>Zynq PS(ARM Cortex-A9), TFLite Micro, 텐서 아레나 4MB</dd>
+<dt>RTOS</dt><dd>태스크 7개, 바이너리 세마포어, Mutex, Queue</dd>
+</dl>
+</section>
+
+<section id="s4">
+<h2>링크</h2>
+<ul class="links"><li><a href="https://drive.google.com/file/d/1xSyefF0ejK1Y60eP9jwrPD4I7R57ZHVT/view?usp=sharing">시연 영상 원본</a><span class="mono">Google Drive</span></li></ul>
+</section>
+
+<nav class="pager" aria-label="다른 프로젝트"><a href="walking-assist.html"><small>이전</small>STM32 탈부착형 보행 보조 모듈</a><a href="turret.html" style="text-align:right"><small>다음</small>AI 지상 감시·정밀 타격 시스템</a></nav>
+</article>
+</div>
+</main>
+<footer class="foot">© 2026 조현세 · 경희대학교 전자공학과</footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
