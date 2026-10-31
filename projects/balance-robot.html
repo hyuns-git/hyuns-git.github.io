@@ -79,7 +79,7 @@
 <text x="404" y="198" text-anchor="middle" fill="var(--ink-2)" font-size="11">제어 명령</text>
 <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="10" fill="var(--laser)" text-anchor="middle"><text x="348" y="132">담당</text><text x="669" y="90">담당</text></g>
 </svg></div>
-<p class="note" style="margin-top:12px">상위 정책이 정교해도 하위 MCU의 센서값이 제때 정확히 도착해야 제어가 됩니다. 두 보드 사이 통신과 PPO 정책을 함께 맡아서 이 연결을 직접 다뤘습니다.</p>
+<p class="note" style="margin-top:12px">PPO 정책은 ESP32가 보낸 센서값으로 제어 명령을 계산합니다. 저는 정책 작성과 두 보드 사이 통신을 같이 맡았습니다.</p>
 </section>
 
 <section id="s2">
@@ -95,7 +95,7 @@
 <section id="s3">
 <h2>막혔던 문제와 해결</h2>
 <ol class="log">
-<li><span class="i">01</span><div><div class="p">처음 작성한 PPO가 균형을 잡지 못함</div><div class="a">학습량을 늘리고 하이퍼파라미터를 다시 조정해 균형 제어에 성공했습니다.</div></div></li>
+<li><span class="i">01</span><div><div class="p">처음 작성한 PPO가 균형을 잡지 못함</div><div class="a">학습량을 늘리고 하이퍼파라미터를 다시 맞추자 균형을 잡았습니다.</div></div></li>
 <li><span class="i">02</span><div><div class="p">조립 단계에서 센서가 제대로 작동하지 않음</div><div class="a">소프트웨어 담당이었지만 하드웨어 팀원들과 같이 원인을 찾아 해결했습니다.</div></div></li>
 </ol>
 </section>
